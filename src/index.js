@@ -24,12 +24,15 @@ function checksExistsUserAccount(request, response, next) {
 function checksCreateTodosUserAvailability(request, response, next) {
   const { user } = request;
 
-  if (user.pro || (!user.pro && user.todos.length <= 10)) {
+  if (user.pro) {
     return next();
+  } else if (!user.pro && user.todos.length + 1 <= 10) {
+    return next();
+  } else {
+    return response
+      .status(403)
+      .json({ error: "You already have ten todos created." });
   }
-  return response
-    .status(403)
-    .json({ error: "You already have ten todos created." });
 }
 
 function checksTodoExists(request, response, next) {
@@ -45,6 +48,14 @@ function checksTodoExists(request, response, next) {
   if (!validate(todoId)) {
     return response.status(400).json({ error: "Todo ID is incorrect." });
   }
+
+  const userTodo = user.todos.find((todo) => todo.id === todoId); //return boolean
+
+  if (!userTodo) {
+    return response.status(404).json({ error: "Todo don't found." });
+  }
+  request.todo = userTodo;
+  request.user = user;
 
   return next();
 }
